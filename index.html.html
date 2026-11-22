@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Android Plan - Voice Test</title>
+</head>
+<body style="font-family:sans-serif;padding:20px">
+<h2>Voice Assistant Test</h2>
+<input id="key" type="password" placeholder="Paste your API key here" style="width:100%;padding:10px"><br><br>
+<button id="talk" style="padding:20px;font-size:20px;width:100%">Tap and Speak</button>
+<p><b>You said:</b> <span id="heard"></span></p>
+<p><b>Reply:</b> <span id="answer"></span></p>
+<script>
+const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+const rec = new Rec();
+rec.lang = "en-IN";
+document.getElementById("talk").onclick = () => rec.start();
+rec.onresult = async (e) => {
+  const text = e.results[0][0].transcript;
+  document.getElementById("heard").textContent = text;
+  const key = document.getElementById("key").value;
+  const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" + key;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({contents: [{parts: [{text: text + " (Answer in one or two short sentences.)"}]}]})
+  });
+  const data = await res.json();
+  const reply = data.candidates[0].content.parts[0].text;
+  document.getElementById("answer").textContent = reply;
+  speechSynthesis.speak(new SpeechSynthesisUtterance(reply));
+};
+</script>
+</body>
+</html>
